@@ -1,0 +1,3 @@
+- [x] Create ProtectedRoute component to check authentication
+- [x] Import ProtectedRoute in App.tsx
+- [x] Wrap protected routes (/check-disease, /history, /emergency, /health-guide, /profile) with ProtectedRoute

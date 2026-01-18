@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Disease Prediction from Symptoms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 1rem;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+        #results {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .error {
+            color: red;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Disease Prediction from Symptoms</h1>
+    <form id="symptomForm">
+        <label for="symptoms">Enter your symptoms (in English or Hindi):</label><br />
+        <textarea id="symptoms" name="symptoms" placeholder="e.g. fever, cough, headache"></textarea><br />
+        <button type="submit">Predict Disease</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        const form = document.getElementById('symptomForm');
+        const resultsDiv = document.getElementById('results');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            resultsDiv.innerHTML = '';
+            const symptoms = document.getElementById('symptoms').value.trim();
+            if (!symptoms) {
+                resultsDiv.innerHTML = '<p class="error">Please enter your symptoms.</p>';
+                return;
+            }
+            form.querySelector('button').disabled = true;
+            resultsDiv.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ symptoms })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    resultsDiv.innerHTML = `<p class="error">${errorData.error || 'An error occurred'}</p>`;
+                } else {
+                    const data = await response.json();
+                    if (data.predictions && data.predictions.length > 0) {
+                        let html = '<h2>Predicted Diseases:</h2><ul>';
+                        data.predictions.forEach(pred => {
+                            html += `<li><strong>${pred.disease}</strong> - Probability: ${(pred.probability * 100).toFixed(2)}%</li>`;
+                        });
+                        html += '</ul>';
+                        resultsDiv.innerHTML = html;
+                    } else {
+                        resultsDiv.innerHTML = '<p>No predictions available.</p>';
+                    }
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            } finally {
+                form.querySelector('button').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
